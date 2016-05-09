@@ -31,13 +31,17 @@ html, body {
     var freqsArray       = [];
     var oscillatorsArray = [];
 
+    var flag_size;
+    var radius;
+
+
     ////// Oscillator related  //////
     window.AudioContext = window.AudioContext || window.webkitAudioContext;
     var ctx = new AudioContext();
 
 
     function startNote(e) {
-        var frq =  xPosArray[e], o = ctx.createOscillator(), g = ctx.createGain(),
+        var frq =  freqsArray[e], o = ctx.createOscillator(), g = ctx.createGain(),
             bpm = 120, notelength = "1", playlength = 0;
         
         o.type = "sine";
@@ -66,23 +70,37 @@ html, body {
 
         for (var i=0; i<xPosArray.length; i++) {
 
+            flag_size = false;
+
             // Update y position
             if(  yPosArray[i]>c.height || yPosArray[i]<0 )
             {  
                 directionArray[i] *= -1;
-                startNote(i);
+                startNote(i);                
             }
+
+
+            // update size if near border
+            if(  yPosArray[i]>c.height*0.99 || yPosArray[i]<c.height*0.01  )
+            {
+                flag_size = true;
+            }
+
 
             yPosArray[i] += directionArray[i]; 
 
             ctx.beginPath();
             ctx.globalAlpha = xPosArray[i]/c.width+0.1;
             ctx.fillStyle = "rgb(0,100,100)"; //'green';
-            ctx.arc(xPosArray[i],  yPosArray[i] , 50, 0, 2 * Math.PI, false);
+
+
+            radius = 50;
+            if (flag_size==true){ radius=80; }
+
+            ctx.arc(xPosArray[i], yPosArray[i], radius, 0, 2 * Math.PI, false);
             ctx.fill();
             
         };
-
         
     }, 10);
 
@@ -90,12 +108,14 @@ html, body {
     function generateCircles(){        
         xPosArray.push(event.clientX);
         yPosArray.push(event.clientY);
-        directionArray.push(2);
+
+        var thisSpeed = event.clientY/canvas.height*2 + 1;
+
+        directionArray.push(thisSpeed);
 
         var c = document.getElementById("myCanvas");
         var normalizedFreq = event.clientX/c.width;
-        console.log(normalizedFreq);
-        normalizedFreq = normalizedFreq*1000 + 16;
+        normalizedFreq = normalizedFreq*400 + 20;
 
         freqsArray.push(normalizedFreq);
         oscillatorsArray.push( ctx.createOscillator() );
