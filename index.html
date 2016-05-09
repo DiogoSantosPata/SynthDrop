@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+canvas {
+    border:1px solid #d3d3d3;
+    /*background-color: #222222;*/
+    /*width:  100%;*/
+    /*height: 100%;*/
+}
+
+html, body {
+  width:  100%;
+  height: 100%;
+  margin: 0px;
+}
+
+</style>
+
+</head>
+<!-- <body onload="start()"> -->
+<script>
+
+    ////// Global vars  //////
+    var xPosArray        = [];
+    var yPosArray        = [];
+    var directionArray   = [];
+    var freqsArray       = [];
+    var oscillatorsArray = [];
+
+    ////// Oscillator related  //////
+    window.AudioContext = window.AudioContext || window.webkitAudioContext;
+    var ctx = new AudioContext();
+
+
+    function startNote(e) {
+        var frq =  xPosArray[e], o = ctx.createOscillator(), g = ctx.createGain(),
+            bpm = 120, notelength = "1", playlength = 0;
+        
+        o.type = "sine";
+        
+        // 1 second divided by number of beats per second times number of beats (length of a note)
+        playlength = 1/(bpm/60) * notelength;
+        
+        if (frq) {            
+            o.frequency.value = frq;
+            o.start(ctx.currentTime);
+            o.stop(ctx.currentTime + playlength);
+            
+            g.gain.value = 1;
+            o.connect(g);
+            g.connect(ctx.destination);
+        }
+    }
+
+
+    ////// Main loop //////
+    setInterval(function(){ 
+        var c = document.getElementById("myCanvas");
+        var ctx = c.getContext("2d");
+        ctx.clearRect(0,0,c.width,c.height);
+
+
+        for (var i=0; i<xPosArray.length; i++) {
+
+            // Update y position
+            if(  yPosArray[i]>c.height || yPosArray[i]<0 )
+            {  
+                directionArray[i] *= -1;
+                startNote(i);
+            }
+
+            yPosArray[i] += directionArray[i]; 
+
+            ctx.beginPath();
+            ctx.globalAlpha = xPosArray[i]/c.width+0.1;
+            ctx.fillStyle = "rgb(0,100,100)"; //'green';
+            ctx.arc(xPosArray[i],  yPosArray[i] , 50, 0, 2 * Math.PI, false);
+            ctx.fill();
+            
+        };
+
+        
+    }, 10);
+
+
+    function generateCircles(){        
+        xPosArray.push(event.clientX);
+        yPosArray.push(event.clientY);
+        directionArray.push(2);
+
+        var c = document.getElementById("myCanvas");
+        var normalizedFreq = event.clientX/c.width;
+        console.log(normalizedFreq);
+        normalizedFreq = normalizedFreq*1000 + 16;
+
+        freqsArray.push(normalizedFreq);
+        oscillatorsArray.push( ctx.createOscillator() );
+    }
+
+
+
+</script>
+<canvas id="myCanvas" width="1200" height="500" style="border:1px solid #d3d3d3;" onClick="generateCircles()">
+</body>
+</html>
