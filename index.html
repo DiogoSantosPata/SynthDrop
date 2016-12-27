@@ -1,135 +1,112 @@
-<!DOCTYPE html>
 <html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<style>
-canvas {
-    border:1px solid #d3d3d3;
-    /*background-color: #222222;*/
-    /*width:  100%;*/
-    /*height: 100%;*/
-}
+    <body onload="start()">    
+        <canvas id="synthdropCanvas"  style="border:2px solid #d3d3d3; width:99%; height:99%;" onClick="generateCircles()">        
+    </body>
+</html>
 
-html, body {
-  /*width:  100%;*/
-  /*height: 100%;*/
-  /*margin: 0px;*/
-    overflow: hidden;
-
-}
-
-</style>
-
-</head>
-<body onload="start()">
 <script>
-
     ////// Global vars  //////
+    var showing_message = true; // showing initial message
     var xPosArray        = [];
     var yPosArray        = [];
     var directionArray   = [];
     var freqsArray       = [];
     var oscillatorsArray = [];
-
     var flag_size;
     var radius;
-
-
+    ////// Canvas related  //////
+    var canvas;
+    var ctx_canvas;
     ////// Oscillator related  //////
-    window.AudioContext = window.AudioContext || window.webkitAudioContext;
-    var ctx = new AudioContext();
+    try { window.AudioContext = window.AudioContext||window.webkitAudioContext; }
+    catch(e){ alert('Web Audio API is not supported in this browser'); }
+    var ctx_audio = new AudioContext();
 
+    
+    function start()    
+    {
+        canvas = document.getElementById("synthdropCanvas");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-    function startNote(e) {
-        var frq =  freqsArray[e], o = ctx.createOscillator(), g = ctx.createGain(),
-            bpm = 120, notelength = "1", playlength = 0;
-        
-        o.type = "sine";
-        
-        // 1 second divided by number of beats per second times number of beats (length of a note)
-        playlength = 1/(bpm/60) * notelength;
-        
-        if (frq) {            
-            o.frequency.value = frq;
-            o.start(ctx.currentTime);
-            o.stop(ctx.currentTime + playlength);
-            
-            g.gain.value = 1;
-            o.connect(g);
-            g.connect(ctx.destination);
-        }
+        ctx_canvas = canvas.getContext("2d");
+        ctx_canvas.font = "30px Verdana ";
+        ctx_canvas.fillStyle = 'grey';
+        ctx_canvas.fillText("Press on screen",canvas.width/2.3,canvas.height/2);
     }
 
 
-    ////// Main loop //////
-    setInterval(function(){ 
-        var c = document.getElementById("myCanvas");
-        var ctx = c.getContext("2d");
-        ctx.clearRect(0,0,c.width,c.height);
+    function generateCircles()    
+    {
+        if(showing_message == true){ showing_message = false; }
+        
+        xPosArray.push(event.clientX);
+        yPosArray.push(event.clientY);
+        var thisSpeed = event.clientY/canvas.height*3 + 1;
+        directionArray.push(thisSpeed);
+        
+        var normalizedFreq = event.clientX/canvas.width;
+        normalizedFreq = (normalizedFreq+173) + (400-173) * normalizedFreq  // where: 173 is the min freq, and 400 is the max freq
+        freqsArray.push(normalizedFreq);
+        oscillatorsArray.push( ctx_audio.createOscillator() );
+    }
 
 
+
+
+    function startNote(e) 
+    {
+        frq =  freqsArray[e];        
+        playlength = 1.0/(120/60.0); // length_of_a_note = 1sec / (bpm/number_of_beats)
+        
+        g = ctx_audio.createGain();
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx_audio.currentTime + 1);
+
+        o = ctx_audio.createOscillator();
+        o.type = "sine";
+        o.frequency.value = frq;
+        o.start(ctx_audio.currentTime);
+        o.stop(ctx_audio.currentTime + playlength);
+        g.gain.value = 10;
+        o.connect(g);
+        g.connect(ctx_audio.destination);
+    }
+
+
+    function update_screen()
+    {
+        ctx_canvas.clearRect(0,0,canvas.width,canvas.height);
         for (var i=0; i<xPosArray.length; i++) {
-
             flag_size = false;
-
-            // Update y position
-            if(  yPosArray[i]>c.height || yPosArray[i]<0 )
+            
+            if(  yPosArray[i]>canvas.height || yPosArray[i]<0 ) // Update y position
             {  
                 directionArray[i] *= -1;
                 startNote(i);                
             }
-
-
-            // update size if near border
-            if(  yPosArray[i]>c.height*0.99 || yPosArray[i]<c.height*0.01  )
+            
+            if(  yPosArray[i]>canvas.height*0.99 || yPosArray[i]<canvas.height*0.01  ) // update size if near border
             {
                 flag_size = true;
             }
-
-
             yPosArray[i] += directionArray[i]; 
-
-            ctx.beginPath();
-            ctx.globalAlpha = xPosArray[i]/c.width+0.1;
-            ctx.fillStyle = "rgb(0,100,100)"; //'green';
-
-
-            radius = 50;
-            if (flag_size==true){ radius=80; }
-
-            ctx.arc(xPosArray[i], yPosArray[i], radius, 0, 2 * Math.PI, false);
-            ctx.fill();
-            
+            ctx_canvas.beginPath();
+            ctx_canvas.globalAlpha = xPosArray[i]/canvas.width+0.1;
+            ctx_canvas.fillStyle = "rgb(0,100,100)"; //'green';
+            radius = Math.min(canvas.height,canvas.width) * 0.08  ;
+            if (flag_size==true){ radius= radius*1.4 ; }
+            ctx_canvas.arc(xPosArray[i], yPosArray[i], radius, 0, 2 * Math.PI, false);
+            ctx_canvas.fill();            
         };
-        
+
+    }
+
+
+    ////// Main loop //////
+    setInterval(function()
+    {
+        if(showing_message == false){ update_screen(); }
+
     }, 10);
 
-
-    function generateCircles(){        
-        xPosArray.push(event.clientX);
-        yPosArray.push(event.clientY);
-
-        var thisSpeed = event.clientY/canvas.height*2 + 1;
-
-        directionArray.push(thisSpeed);
-
-        var c = document.getElementById("myCanvas");
-        var normalizedFreq = event.clientX/c.width;
-        normalizedFreq = normalizedFreq*400 + 20;
-
-        freqsArray.push(normalizedFreq);
-        oscillatorsArray.push( ctx.createOscillator() );
-    }
-
-
-    function start(){
-        canvas = document.getElementById("myCanvas");
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    }
-
-
 </script>
-<canvas id="myCanvas"  style="border:1px solid #d3d3d3;" onClick="generateCircles()">
-</body>
-</html>
