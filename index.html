@@ -30,9 +30,11 @@
         canvas.height = window.innerHeight;
 
         ctx_canvas = canvas.getContext("2d");
-        ctx_canvas.font = "30px Verdana ";
         ctx_canvas.fillStyle = 'grey';
+        ctx_canvas.font = "30px Verdana ";
         ctx_canvas.fillText("Press on screen",canvas.width/2.3,canvas.height/2);
+        ctx_canvas.font = "15px Verdana";
+        ctx_canvas.fillText("X-axis: Frequency   |   Y-axis: Speed ",canvas.width/2.4,canvas.height/2+30);
     }
 
 
