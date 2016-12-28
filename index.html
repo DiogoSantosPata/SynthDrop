@@ -1,6 +1,6 @@
 <html>
     <body onload="start()">    
-        <canvas id="synthdropCanvas"  style="border:2px solid #d3d3d3; width:99%; height:99%;" onClick="generateCircles()">        
+        <canvas id="synthdropCanvas"  style="border:2px solid #d3d3d3; width:99%; height:99%;">        
     </body>
 </html>
 
@@ -21,14 +21,14 @@
     try { window.AudioContext = window.AudioContext||window.webkitAudioContext; }
     catch(e){ alert('Web Audio API is not supported in this browser'); }
     var ctx_audio = new AudioContext();
-
     
     function start()    
     {
         canvas = document.getElementById("synthdropCanvas");
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-
+        canvas.addEventListener("click", generateCircles, false);
+        
         ctx_canvas = canvas.getContext("2d");
         ctx_canvas.fillStyle = 'grey';
         ctx_canvas.font = "30px Verdana ";
@@ -38,7 +38,7 @@
     }
 
 
-    function generateCircles()    
+    function generateCircles(event)    
     {
         if(showing_message == true){ showing_message = false; }
         
