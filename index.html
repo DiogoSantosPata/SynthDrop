@@ -17,6 +17,7 @@
     var oscillatorsArray = [];
     var flag_size;
     var radius;
+    var position_defined_speed_flag = true; // a flag to set speed mode (fixed or Y-position defined)
     ////// Canvas related  //////
     var canvas;
     var ctx_canvas;
@@ -25,13 +26,20 @@
     catch(e){ alert('Web Audio API is not supported in this browser'); }
     var ctx_audio = new AudioContext();
     
-    function start()    
-    {
+
+    function start()
+    {        
         canvas = document.getElementById("synthdropCanvas");
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         canvas.addEventListener("click", generateCircles, false);
         
+        document.addEventListener("keypress", fixedspeed, false);
+        document.addEventListener("keyup", dynamicspeed, false);
+
+
+         
+
         ctx_canvas = canvas.getContext("2d");
         ctx_canvas.fillStyle = 'grey';
         ctx_canvas.font = "30px Verdana ";
@@ -47,7 +55,19 @@
         
         xPosArray.push(event.clientX);
         yPosArray.push(event.clientY);
-        var thisSpeed = event.clientY/canvas.height*3 + 1;
+
+
+        if (position_defined_speed_flag == true)
+        {
+            var thisSpeed = event.clientY/canvas.height*3 + 1;
+        }
+        else
+        {
+            var thisSpeed = 4;
+        }
+        
+
+
         directionArray.push(thisSpeed);
         
         var normalizedFreq = event.clientX/canvas.width;
@@ -55,10 +75,6 @@
         freqsArray.push(normalizedFreq);
         oscillatorsArray.push( ctx_audio.createOscillator() );
     }
-
-
-
-
     function startNote(e) 
     {
         frq =  freqsArray[e];        
@@ -66,7 +82,6 @@
         
         g = ctx_audio.createGain();
         g.gain.exponentialRampToValueAtTime(0.0001, ctx_audio.currentTime + 1);
-
         o = ctx_audio.createOscillator();
         o.type = "sine";
         o.frequency.value = frq;
@@ -76,8 +91,6 @@
         o.connect(g);
         g.connect(ctx_audio.destination);
     }
-
-
     function update_screen()
     {
         ctx_canvas.clearRect(0,0,canvas.width,canvas.height);
@@ -103,7 +116,24 @@
             ctx_canvas.arc(xPosArray[i], yPosArray[i], radius, 0, 2 * Math.PI, false);
             ctx_canvas.fill();            
         };
+    }
 
+
+    /* Functions to set speed mode */
+    function fixedspeed(event) /* Speed is fixed, independent of mouse position */
+    {
+        if( position_defined_speed_flag == true )
+        {
+            if (event.keyCode == 97 || event.keyCode == 65 ) { position_defined_speed_flag=false; }    
+        }        
+    }
+
+    function dynamicspeed(event) /* Speed is defined by mouse position */
+    {    
+        if( position_defined_speed_flag == false )
+        {
+            if (event.keyCode == 97 || event.keyCode == 65 ) { position_defined_speed_flag=true; }    
+        }
     }
 
 
@@ -111,7 +141,5 @@
     setInterval(function()
     {
         if(showing_message == false){ update_screen(); }
-
     }, 10);
-
 </script>
